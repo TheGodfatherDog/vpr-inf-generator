@@ -1,32 +1,42 @@
 @echo off
+chcp 65001 >nul
+cd /d "%~dp0"
 title Генератор заданий по Информатике
-chcp 65001 > nul
 
-echo [INFO] Проверка наличия Node.js...
+echo [INFO] Проверка наличия Node.js и Python...
+
 where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [ERROR] Node.js не установлен! Пожалуйста, скачайте его с https://nodejs.org/ и установите.
+if errorlevel 1 (
+    echo [ERROR] Node.js не установлен! Скачайте его с https://nodejs.org/
     pause
-    exit /b
+    exit /b 1
 )
 
-set VENV_DIR=venv
+where python >nul 2>nul
+if errorlevel 1 (
+    echo [ERROR] Python не установлен! Скачайте его с https://www.python.org/
+    pause
+    exit /b 1
+)
 
+set "VENV_DIR=venv"
 if not exist "%VENV_DIR%\Scripts\python.exe" (
-    echo [INFO] Создаю виртуальное окружение Python %VENV_DIR%...
-    python -m venv %VENV_DIR%
+    echo [INFO] Создаю виртуальное окружение Python: %VENV_DIR% ...
+    python -m venv "%VENV_DIR%"
 )
 
 if not exist "package.json" (
     echo [INFO] Инициализация Node.js проекта...
-    echo {"name": "task-generator", "version": "1.0.0", "private": true} > package.json
+    echo {"name": "task-generator", "version": "1.0.0", "private": true}> package.json
 )
 
-echo [INFO] Установка зависимостей (express, docx)...
-call npm install express docx --no-fund --silent
+if not exist "node_modules\express" (
+    echo [INFO] Установка зависимости express...
+    call npm install express --no-fund --no-audit --silent
+)
 
-echo [INFO] Запуск приложения...
-start http://localhost:3000
+echo [INFO] Запуск сервера на http://localhost:3000 ...
+start "" "http://localhost:3000"
 node app.js
 
 pause

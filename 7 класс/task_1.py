@@ -12,10 +12,6 @@ META = {
     "has_variants": False
 }
 
-# =============================================================================
-# 1. СПРАВОЧНИК УСТРОЙСТВ
-# =============================================================================
-
 УСТРОЙСТВА_ВВОДА = [
     "клавиатура", "мышь", "сканер", "микрофон", "веб-камера",
     "тачпад", "трекбол", "джойстик", "графический планшет",
@@ -38,10 +34,11 @@ META = {
     "оперативная память (ОЗУ)", "модуль DDR4/DDR5", "кэш-память процессора"
 ]
 
+# Исключены накопители и сетевые карты, чтобы они не попадали в дистракторы к памяти и сетям
 УЗЛЫ_СИСТЕМНОГО_БЛОКА = [
     "центральный процессор", "материнская плата", "видеокарта",
-    "оперативная память", "блок питания", "кулер системы охлаждения",
-    "внутренний SSD", "звуковая плата", "сетевая карта"
+    "блок питания", "кулер системы охлаждения", "звуковая плата",
+    "радиатор процессора"
 ]
 
 ПЕРИФЕРИЙНЫЕ_УСТРОЙСТВА = [
@@ -64,7 +61,7 @@ META = {
 СЕТЕВЫЕ_УСТРОЙСТВА = [
     "маршрутизатор (роутер)", "сетевой коммутатор (свитч)", "модем",
     "сетевой адаптер", "Wi-Fi модуль", "сетевой концентратор (хаб)",
-    "оптоволоконный трансивер"
+    "оптоволоконный трансивер", "сетевая карта"
 ]
 
 ПОРТЫ_И_РАЗЪЕМЫ = [
@@ -108,13 +105,13 @@ ARCHETYPES = [
     },
     {
         "question": "Выберите устройства, обычно находящиеся внутри системного блока, и запишите в ответе их номера в порядке возрастания:",
-        "targets": УЗЛЫ_СИСТЕМНОГО_БЛОКА,
+        "targets": УЗЛЫ_СИСТЕМНОГО_БЛОКА + ПАМЯТЬ_ОПЕРАТИВНАЯ,
         "distractors": ПЕРИФЕРИЙНЫЕ_УСТРОЙСТВА
     },
     {
         "question": "Выберите внешние (периферийные) устройства компьютера и запишите в ответе их номера в порядке возрастания:",
         "targets": ПЕРИФЕРИЙНЫЕ_УСТРОЙСТВА,
-        "distractors": УЗЛЫ_СИСТЕМНОГО_БЛОКА
+        "distractors": УЗЛЫ_СИСТЕМНОГО_БЛОКА + ПАМЯТЬ_ОПЕРАТИВНАЯ
     },
     {
         "question": "Выберите устройства, подключаемые к компьютеру через USB-порт, и запишите в ответе их номера в порядке возрастания:",
@@ -148,12 +145,10 @@ def generate():
 
     while True:
         archetype = random.choice(ARCHETYPES)
-
         targets_pool = list({item.strip() for item in archetype["targets"] if item.strip()})
         distractors_pool = list({item.strip() for item in archetype["distractors"] if item.strip()} - set(targets_pool))
 
-        target_count = random.randint(2, 6)
-        target_count = min(target_count, len(targets_pool))
+        target_count = min(random.randint(2, 6), len(targets_pool))
         distractor_count = 8 - target_count
 
         if target_count < 2 or len(distractors_pool) < distractor_count:
@@ -165,21 +160,11 @@ def generate():
         items = selected_targets + selected_distractors
         random.shuffle(items)
 
-        correct_indices = [
-            str(idx + 1)
-            for idx, item in enumerate(items)
-            if item in selected_targets
-        ]
-        
-        correct_answer = "".join(correct_indices)
-
-        # Выводим все 8 вариантов единым сплошным потоком через 3 пробела
-        # На альбомном листе это помещается в одну строку, экономя место!
+        correct_answer = "".join([str(idx + 1) for idx, item in enumerate(items) if item in selected_targets])
         items_str = "   ".join([f"{i + 1}) {items[i]}" for i in range(8)])
-        task_text = f"{archetype['question']}\n{items_str}"
 
         return {
-            "task": task_text,
+            "task": f"{archetype['question']}\n{items_str}",
             "variants": None,
             "answer": correct_answer
         }
